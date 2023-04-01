@@ -5,8 +5,9 @@ import moment from "moment";
 const cheerio = require('cheerio');
 
 const setTimeZone = (time) => {
-  const dt = new Date(time).toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-  return moment(dt)
+  // const dt = new Date(time).toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+  // return moment(dt)
+  return moment(time);
 }
 
 const _fromCode = 'BID';
