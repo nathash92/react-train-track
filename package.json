@@ -1,0 +1,22 @@
+{
+  "name": "where-is-train",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "bootstrap": "^5.2.3",
+    "eslint": "8.37.0",
+    "eslint-config-next": "13.2.4",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "next": "13.2.4",
+    "puppeteer": "^19.8.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  }
+}
