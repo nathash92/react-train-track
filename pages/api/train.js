@@ -1,7 +1,8 @@
+import axios from "axios";
 import { orderBy } from "lodash";
 import moment from "moment";
-import chromium from 'chrome-aws-lambda';
-import puppeteer from 'puppeteer-core'
+
+const cheerio = require('cheerio');
 
 const _fromCode = 'BID';
 const _fromName = 'BIDADI';
@@ -82,48 +83,45 @@ export default async function handler(req, res) {
 
 }
 
+const formatTime = (timeStr) => {
+  if (timeStr) {
+    let f = timeStr.replace(/[^0-9\:]/gi, '').split(':');
+    let dt = new Date();
+    dt.setHours(f[0]);
+    dt.setMinutes(f[1]);
+    return dt.toString();
+  } else {
+    return timeStr;
+  }
+};
+
 async function getTrains(fromCode, fromName, toCode, toName) {
-  const browser = await puppeteer.launch({
-    // args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath,
-    headless: true,
-    ignoreHTTPSErrors: true,
-    channel:'chrome'
-  });
-  const page = await browser.newPage();
-  await page.goto(`https://www.railyatri.in/booking/trains-between-stations?from_code=${fromCode}&from_name=${fromName}+&journey_date=${journeyDate}&src=tbs&to_code=${toCode}&to_name=${toName}+&utm_source=tt_landing_dweb_header_tbs`);
 
+  const r = await axios.get(`https://www.railyatri.in/booking/trains-between-stations?from_code=${fromCode}&from_name=${fromName}+&journey_date=${journeyDate}&src=tbs&to_code=${toCode}&to_name=${toName}+&utm_source=tt_landing_dweb_header_tbs`);
 
-  const trains = await page.$$eval('.Result_Info_Box', (els, fromName, toName, moment) => {
+  const $ = cheerio.load(r.data);
 
-    const formatTime = (timeStr) => {
-      if (timeStr) {
-        let f = timeStr.replace(/[^0-9\:]/gi, '').split(':');
-        let dt = new Date();
-        dt.setHours(f[0]);
-        dt.setMinutes(f[1]);
-        return dt.toString();
-      } else {
-        return timeStr;
-      }
-    };
+  const boxes = $('.Result_Info_Box');
 
-    return els.map((e) => {
-      let name = e.querySelector('.TrainName');
-      let dep = e.querySelector('.Departure-time-text-1');
-      let arriving = e.querySelector('.Arrival-time-text-1');
-      return {
-        name: name ? name.innerText : '',
-        departure: dep ? formatTime(dep.innerText) : '',
-        arriving: arriving ? formatTime(arriving.innerText) : '',
+  let trains = [];
+
+  try {
+    boxes.each((i, e) => {
+      let name = $(e).find('.TrainName');
+      let dep = $(e).find('.Departure-time-text-1');
+      let arriving = $(e).find('.Arrival-time-text-1');
+      trains.push({
+        name: name ? name.text() : '',
+        departure: dep ? formatTime(dep.text()) : '',
+        arriving: arriving ? formatTime(arriving.text()) : '',
         from: fromName,
         to: toName
-      }
+      });
     })
-  }, fromName, toName, moment);
-
-  await browser.close();
+  } catch (error) {
+    console.log(error);
+    trains = [];
+  } 
 
   return trains;
 }
