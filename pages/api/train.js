@@ -18,25 +18,15 @@ export default async function handler(req, res) {
 
   const query = req.query;
 
-  const curentTime = new Date();
-
   if (nextCacheExp && moment().diff(nextCacheExp, 'second') >= 0) {
     cache = {}
   }
 
   const getResult = (data) => {
-    return data.filter(e => {
-      if (e.departure && e.arriving) {
-        const val = moment(curentTime).diff(new Date(e.arriving), 'minutes');
-        if (val >= -(query.mins || 30) && val <= 0) {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    }).map((e) => {
+
+    const curentTime = new Date();
+
+    return data.map((e) => {
       let f = new Date(e.arriving);
       let t = new Date(e.departure);
       if (f > t) {
@@ -52,6 +42,9 @@ export default async function handler(req, res) {
         fromTime: f,
         toTime: t
       }
+    }).filter(e => {
+      const diff = moment(e.fromTime).diff(curentTime, 'minutes')
+      return diff >= 0 && diff < (query.mins || 30);
     })
   }
 
@@ -119,9 +112,8 @@ async function getTrains(fromCode, fromName, toCode, toName) {
       });
     })
   } catch (error) {
-    console.log(error);
     trains = [];
-  } 
+  }
 
   return trains;
 }
