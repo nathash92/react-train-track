@@ -4,12 +4,15 @@ import moment from "moment";
 
 const cheerio = require('cheerio');
 
+const setTimeZone = (time) => {
+  return moment(time).utcOffset("+05:30");
+}
+
 const _fromCode = 'BID';
 const _fromName = 'BIDADI';
 const _toCode = 'KGI';
 const _toName = 'KENGERI';
-const journeyDate = moment().format('DD MMM ddd');
-
+const journeyDate = setTimeZone(new Date()).format('DD MMM ddd');
 
 let cache = {};
 let nextCacheExp;
@@ -18,13 +21,13 @@ export default async function handler(req, res) {
 
   const query = req.query;
 
-  if (nextCacheExp && moment().diff(nextCacheExp, 'second') >= 0) {
+  if (nextCacheExp && setTimeZone(new Date()).diff(nextCacheExp, 'second') >= 0) {
     cache = {}
   }
 
   const getResult = (data) => {
 
-    const curentTime = new Date();
+    const curentTime = setTimeZone(new Date());
 
     return data.map((e) => {
       let f = new Date(e.arriving);
@@ -43,7 +46,7 @@ export default async function handler(req, res) {
         toTime: t
       }
     }).filter(e => {
-      const diff = moment(e.fromTime).diff(curentTime, 'minutes')
+      const diff = setTimeZone(e.fromTime).diff(curentTime, 'minutes')
       return diff >= 0 && diff < (query.mins || 30);
     })
   }
@@ -56,7 +59,7 @@ export default async function handler(req, res) {
   } else {
     fromKengeri = await getTrains(_fromCode, _fromName, _toCode, _toName);
     cache[_fromCode + _toCode] = { data: fromKengeri };
-    nextCacheExp = moment().add(5, 'minute');
+    nextCacheExp = setTimeZone(new Date()).add(5, 'minute');
   }
 
   if (cache[_toCode + _fromCode]) {
@@ -64,7 +67,7 @@ export default async function handler(req, res) {
   } else {
     fromBidadi = await getTrains(_toCode, _toName, _fromCode, _fromName);
     cache[_toCode + _fromCode] = { data: fromBidadi };
-    nextCacheExp = moment().add(5, 'minute');
+    nextCacheExp = setTimeZone(new Date()).add(5, 'minute');
   }
 
   const result1 = getResult(fromKengeri);
