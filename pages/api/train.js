@@ -1,6 +1,6 @@
 import { orderBy } from "lodash";
 import moment from "moment";
-import edgeChromium from 'chrome-aws-lambda'
+import chromium from 'chrome-aws-lambda';
 import puppeteer from 'puppeteer-core'
 
 const _fromCode = 'BID';
@@ -84,9 +84,12 @@ export default async function handler(req, res) {
 
 async function getTrains(fromCode, fromName, toCode, toName) {
   const browser = await puppeteer.launch({
-    executablePath: await edgeChromium.executablePath,
-    args: edgeChromium.args,
-    headless: false,
+    // args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath,
+    headless: true,
+    ignoreHTTPSErrors: true,
+    channel:'chrome'
   });
   const page = await browser.newPage();
   await page.goto(`https://www.railyatri.in/booking/trains-between-stations?from_code=${fromCode}&from_name=${fromName}+&journey_date=${journeyDate}&src=tbs&to_code=${toCode}&to_name=${toName}+&utm_source=tt_landing_dweb_header_tbs`);
